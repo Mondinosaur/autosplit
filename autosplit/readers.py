@@ -5,8 +5,7 @@ from typing import Any, Optional
 
 try:
     import pandas as pd
-except ImportError as e:
-    print(f"Error importing pandas: {e}")
+except ImportError:
     pd = None
 
 def read_input(path: str, sheet: Optional[str] = None) -> Any:

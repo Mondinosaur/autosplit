@@ -6,9 +6,8 @@ from typing import Any, Optional
 
 try:
     import pandas as pd
-except ImportError as e:
-    print(f"Error importing pandas in writers.py: {e}")
-    pd = None  # handle gracefully at runtime
+except ImportError:
+    pd = None
 
 def ensure_dir(path: str) -> None:
     """Ensure a directory exists, creating it if necessary."""
