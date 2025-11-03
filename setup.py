@@ -32,4 +32,8 @@ setup(
             "autosplit=autosplit.cli:main",
         ],
     },
+    package_data={
+        "autosplit": ["py.typed"],
+    },
+    zip_safe=False,
 )

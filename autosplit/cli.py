@@ -4,13 +4,11 @@ import argparse
 import csv
 import os
 import sys
-import traceback
 from typing import List, Optional
 
 try:
     import pandas as pd
-except ImportError as e:
-    print(f"Error importing pandas: {e}")
+except ImportError:
     pd = None
 
 from . import readers, processors, writers, validators
@@ -24,19 +22,28 @@ def main(argv: Optional[List[str]] = None) -> int:
     Returns:
         int: Exit code (0 for success, non-zero for errors)
     """
+    # Debug info
+    print("\nStarting AutoSplit CLI...")
+    print(f"Python version: {sys.version}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Command arguments: {argv if argv is not None else sys.argv[1:]}")
+    
     try:
-        print("\nStarting AutoSplit CLI...")
-        print(f"Current working directory: {os.getcwd()}")
-    except Exception as e:
-        print(f"Error during startup: {e}")
-        import traceback
-        traceback.print_exc()
-        return 1
-
-        parser = argparse.ArgumentParser(
-            prog='autosplit', 
-            description='Split multi-product sheets into per-product files'
-        )
+        import pandas as pd
+        print(f"Pandas version: {pd.__version__}")
+    except ImportError:
+        print("Warning: pandas not found")
+    
+    # Directory checks
+    print("\nDirectory checks:")
+    for d in ['inputs', 'outputs']:
+        exists = os.path.exists(d)
+        writable = os.access(d, os.W_OK) if exists else False
+        print(f"{d}/: exists={exists}, writable={writable}")
+    parser = argparse.ArgumentParser(
+        prog='autosplit', 
+        description='Split multi-product sheets into per-product files'
+    )
     parser.add_argument('input', help='Input .xlsx or .csv file (or a folder)')
     parser.add_argument('--key-col', help='Column name to group by (e.g. SKU)')
     parser.add_argument('--block', action='store_true', 

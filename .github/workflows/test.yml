@@ -24,16 +24,18 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        echo "Installing requirements..."
         pip install -r requirements.txt
-        echo "Installing package in development mode..."
         pip install -e .
-        echo "Installed packages:"
+        
+        # Verify installation
+        echo "Checking installed packages:"
         pip list
-        echo "Python path:"
+        
+        echo "\nChecking if autosplit is importable:"
+        python -c "import autosplit; print(f'Autosplit version: {autosplit.__version__}')"
+        
+        echo "\nPython path:"
         python -c "import sys; print('\n'.join(sys.path))"
-        echo "Checking pandas installation:"
-        python -c "import pandas; print(f'pandas version: {pandas.__version__}')"
         
     - name: Set up test files
       run: |
@@ -62,35 +64,34 @@ jobs:
 
     - name: Run example split
       run: |
-        # Show Python environment info
-        echo "Python version:"
-        python --version
-        echo "\nPython path:"
-        python -c "import sys; print('\n'.join(sys.path))"
-        
-        # Show input file contents
+        # Show environment before running
+        echo "Before running autosplit:"
+        pwd
+        echo "\nDirectory contents:"
+        ls -la
         echo "\nInput file contents:"
         cat inputs/example_products.csv
         
-        # Run autosplit with debug output and catch any errors
-        python -m autosplit.cli inputs/example_products.csv --key-col "Product Code" --min-images 1 --xlsx || {
-          echo "Error running autosplit"
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          echo "\nInputs directory:"
-          ls -la inputs/
-          echo "\nOutputs directory:"
-          ls -la outputs/ || echo "outputs/ not found"
+        # Run autosplit with debug output and error checking
+        set -x  # Enable command echo
+        if ! python -m autosplit.cli inputs/example_products.csv --key-col "Product Code" --min-images 1 --xlsx; then
+          echo "\nError: autosplit command failed"
+          echo "\nChecking python executable:"
+          which python
+          echo "\nPython version:"
+          python --version
+          echo "\nModule search path:"
+          python -c "import sys; print('\n'.join(sys.path))"
           exit 1
-        }
+        fi
+        set +x  # Disable command echo
         
-        # Show current directory and its contents
+        # Show results
+        echo "\nAfter running autosplit:"
         pwd
         echo "\nCurrent directory contents:"
         ls -la
-        
-        echo "\nOutputs directory contents (if exists):"
+        echo "\nOutputs directory contents:"
         ls -la outputs/ || echo "outputs/ directory not found or empty"
         
     - name: Check outputs
