@@ -27,20 +27,32 @@ jobs:
         pip install -r requirements.txt
         pip install -e .
         
-    - name: Run example split
+    - name: Set up test files
       run: |
+        # Create directories
+        mkdir -p examples inputs outputs
+        
+        # Create example test file
+        cat > examples/example_products.csv << EOL
+        Product Code,Description,Image1,Image2,Price,Stock
+        DEMO001,Example Product 1,https://example.com/img1.jpg,https://example.com/img2.jpg,19.99,100
+        DEMO002,Example Product 2,https://example.com/img3.jpg,https://example.com/img4.jpg,29.99,50
+        DEMO003,Example Product 3,https://example.com/img5.jpg,https://example.com/img6.jpg,39.99,75
+        EOL
+        
         # Show workspace contents
         echo "Workspace contents:"
         ls -la
         echo "\nExample contents:"
         ls -la examples/
         
-        # Create input directory and copy example
-        mkdir -p inputs
+        # Copy example to inputs
         cp examples/example_products.csv inputs/
         echo "\nInputs contents:"
         ls -la inputs/
-        
+
+    - name: Run example split
+      run: |
         # Run autosplit as a module with verbose output
         python -m autosplit.cli inputs/example_products.csv --key-col "Product Code" --min-images 1 --xlsx
         
