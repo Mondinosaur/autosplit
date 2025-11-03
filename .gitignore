@@ -32,8 +32,10 @@ ENV/
 *.code-workspace
 
 # Project specific
-inputs/
-outputs/
+inputs/*
+!inputs/.gitkeep
+outputs/*
+!outputs/.gitkeep
 examples/
 
 # OS specific
