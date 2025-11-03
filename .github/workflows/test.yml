@@ -64,35 +64,50 @@ jobs:
 
     - name: Run example split
       run: |
+        # Ensure directories exist with proper permissions
+        mkdir -p inputs outputs
+        chmod 777 inputs outputs
+        
         # Show environment before running
         echo "Before running autosplit:"
         pwd
-        echo "\nDirectory contents:"
+        echo "\nWorking directory contents:"
         ls -la
         echo "\nInput file contents:"
         cat inputs/example_products.csv
         
-        # Run autosplit with debug output and error checking
+        # Run autosplit with explicit paths
+        echo "\nRunning autosplit..."
         set -x  # Enable command echo
-        if ! python -m autosplit.cli inputs/example_products.csv --key-col "Product Code" --min-images 1 --xlsx; then
-          echo "\nError: autosplit command failed"
-          echo "\nChecking python executable:"
-          which python
-          echo "\nPython version:"
-          python --version
-          echo "\nModule search path:"
-          python -c "import sys; print('\n'.join(sys.path))"
-          exit 1
-        fi
+        python -m autosplit.cli inputs/example_products.csv \
+          --key-col "Product Code" \
+          --min-images 1 \
+          --xlsx \
+          --output-dir "$(pwd)/outputs"
+        EXIT_CODE=$?
         set +x  # Disable command echo
         
-        # Show results
-        echo "\nAfter running autosplit:"
-        pwd
-        echo "\nCurrent directory contents:"
-        ls -la
+        # Check for manifest in various locations
+        echo "\nChecking for manifest file..."
+        find . -name manifest.csv
+        
+        # Show final state
+        echo "\nFinal directory structure:"
+        find . -type f
+        
+        # If manifest exists somewhere else, move it
+        FOUND_MANIFEST=$(find . -name manifest.csv | head -n 1)
+        if [ -n "$FOUND_MANIFEST" ] && [ "$FOUND_MANIFEST" != "./outputs/manifest.csv" ]; then
+          echo "Moving manifest from $FOUND_MANIFEST to outputs/manifest.csv"
+          mv "$FOUND_MANIFEST" outputs/manifest.csv
+        fi
+        
+        # Show outputs directory contents
         echo "\nOutputs directory contents:"
-        ls -la outputs/ || echo "outputs/ directory not found or empty"
+        ls -la outputs/
+        
+        # Exit with original command status
+        exit $EXIT_CODE
         
     - name: Check outputs
       run: |

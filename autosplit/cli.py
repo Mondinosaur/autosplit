@@ -58,8 +58,15 @@ def main(argv: Optional[List[str]] = None) -> int:
                        help='Directory to write outputs')
 
     args = parser.parse_args(argv)
-    out_dir = args.output_dir
+    
+    # Convert output_dir to absolute path if it's not already
+    out_dir = os.path.abspath(args.output_dir)
+    print(f"\nUsing output directory: {out_dir}")
+    
     writers.ensure_dir(out_dir)
+    print(f"Output directory exists: {os.path.exists(out_dir)}")
+    print(f"Output directory is writable: {os.access(out_dir, os.W_OK)}")
+    
     image_cols = args.image_cols.split(',') if args.image_cols else None
 
     # Read input file
@@ -98,7 +105,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"Output directory exists: {os.path.exists(out_dir)}")
     print(f"Output directory is writable: {os.access(out_dir, os.W_OK)}")
     
-    with open(manifest_path, 'w', newline='', encoding='utf-8') as mf:
+    try:
+        with open(manifest_path, 'w', newline='', encoding='utf-8') as mf:
+            print(f"Successfully opened {manifest_path} for writing")
+            writer = csv.writer(mf)
+            writer.writerow(['product_key', 'file', 'status', 'warnings'])
+    except IOError as e:
+        print(f"Error writing manifest: {e}")
+        return 1
         writer = csv.writer(mf)
         writer.writerow(['product_key', 'file', 'status', 'warnings'])
 
