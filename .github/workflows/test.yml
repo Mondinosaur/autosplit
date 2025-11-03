@@ -25,10 +25,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install -e .
         
     - name: Run example split
       run: |
-        python autosplit.py inputs/example_products.xlsx --key-col "Product Code" --min-images 1 --xlsx
+        # Create example input
+        mkdir -p inputs
+        cp examples/example_products.csv inputs/
+        
+        # Run autosplit as a module
+        python -m autosplit.cli inputs/example_products.csv --key-col "Product Code" --min-images 1 --xlsx
         
     - name: Check outputs
       run: |
