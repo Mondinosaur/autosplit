@@ -29,11 +29,19 @@ jobs:
         
     - name: Run example split
       run: |
-        # Create example input
+        # Show workspace contents
+        echo "Workspace contents:"
+        ls -la
+        echo "\nExample contents:"
+        ls -la examples/
+        
+        # Create input directory and copy example
         mkdir -p inputs
         cp examples/example_products.csv inputs/
+        echo "\nInputs contents:"
+        ls -la inputs/
         
-        # Run autosplit as a module
+        # Run autosplit as a module with verbose output
         python -m autosplit.cli inputs/example_products.csv --key-col "Product Code" --min-images 1 --xlsx
         
     - name: Check outputs

@@ -6,6 +6,11 @@ import os
 import sys
 from typing import List, Optional
 
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
 from . import readers, processors, writers, validators
 
 def main(argv: Optional[List[str]] = None) -> int:
