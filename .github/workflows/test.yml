@@ -29,8 +29,9 @@ jobs:
         
     - name: Set up test files
       run: |
-        # Create directories
+        # Create directories with explicit permissions
         mkdir -p examples inputs outputs
+        chmod 777 inputs outputs
         
         # Create example test file
         cat > examples/example_products.csv << EOL
@@ -53,10 +54,27 @@ jobs:
 
     - name: Run example split
       run: |
-        # Run autosplit as a module with verbose output
+        # Run autosplit with debug output
         python -m autosplit.cli inputs/example_products.csv --key-col "Product Code" --min-images 1 --xlsx
+        
+        # Show current directory and its contents
+        pwd
+        echo "\nCurrent directory contents:"
+        ls -la
+        
+        echo "\nOutputs directory contents (if exists):"
+        ls -la outputs/ || echo "outputs/ directory not found or empty"
         
     - name: Check outputs
       run: |
-        test -f outputs/manifest.csv || exit 1
-        echo "Test completed successfully"
+        if [ ! -f "outputs/manifest.csv" ]; then
+          echo "Error: manifest.csv not found in outputs directory"
+          echo "Current directory:"
+          pwd
+          echo "\nDirectory contents:"
+          ls -la
+          echo "\nOutputs directory (if exists):"
+          ls -la outputs/ || echo "outputs/ directory not found"
+          exit 1
+        fi
+        echo "Test completed successfully - manifest.csv found"

@@ -22,6 +22,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     Returns:
         int: Exit code (0 for success, non-zero for errors)
     """
+    print("\nStarting AutoSplit CLI...")
+    print(f"Current working directory: {os.getcwd()}")
     parser = argparse.ArgumentParser(
         prog='autosplit', 
         description='Split multi-product sheets into per-product files'
@@ -76,6 +78,10 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Write output files and manifest
     manifest_path = os.path.join(out_dir, 'manifest.csv')
+    print(f"\nAttempting to write manifest to: {manifest_path}")
+    print(f"Output directory exists: {os.path.exists(out_dir)}")
+    print(f"Output directory is writable: {os.access(out_dir, os.W_OK)}")
+    
     with open(manifest_path, 'w', newline='', encoding='utf-8') as mf:
         writer = csv.writer(mf)
         writer.writerow(['product_key', 'file', 'status', 'warnings'])
