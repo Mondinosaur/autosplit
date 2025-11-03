@@ -58,9 +58,11 @@ jobs:
         cat inputs/example_products.csv
 
     - name: Run example split
-      run: >-
-        echo 'import sys
+      run: |
+        cat > run_split.py << 'EOF'
+        import sys
         from autosplit.cli import main
+
         if __name__ == "__main__":
             sys.exit(main([
                 "inputs/example_products.csv",
@@ -68,24 +70,33 @@ jobs:
                 "--min-images", "1",
                 "--xlsx",
                 "--output-dir", "outputs"
-            ]))' > run_split.py &&
-        python3 run_split.py &&
-        EXIT_CODE=$? &&
-        echo "Autosplit exit code: $EXIT_CODE" &&
-        echo "Directory contents:" &&
-        find . -type f &&
-        echo "Outputs directory contents:" &&
-        ls -la outputs/ &&
+            ]))
+        EOF
+        # Show generated script
+        echo "Generated Python script:"
+        cat run_split.py
+        
+        # Run autosplit
+        python3 run_split.py
+        EXIT_CODE=$?
+        
+        echo "Autosplit exit code: $EXIT_CODE"
+        echo "Directory contents:"
+        find . -type f
+        echo "Outputs directory contents:"
+        ls -la outputs/
+        
         if [ -f "outputs/manifest.csv" ]; then
-          echo "Manifest contents:" &&
+          echo "Manifest contents:"
           cat outputs/manifest.csv
         else
-          echo "WARNING: Creating debug manifest.csv" &&
-          echo "product_key,file,status,warnings" > outputs/manifest.csv &&
-          echo "DEMO001,outputs/DEMO001.xlsx,ok," >> outputs/manifest.csv &&
-          echo "DEMO002,outputs/DEMO002.xlsx,ok," >> outputs/manifest.csv &&
+          echo "WARNING: Creating debug manifest.csv"
+          echo "product_key,file,status,warnings" > outputs/manifest.csv
+          echo "DEMO001,outputs/DEMO001.xlsx,ok," >> outputs/manifest.csv
+          echo "DEMO002,outputs/DEMO002.xlsx,ok," >> outputs/manifest.csv
           echo "DEMO003,outputs/DEMO003.xlsx,ok," >> outputs/manifest.csv
-        fi &&
+        fi
+        
         exit $EXIT_CODE
         
     - name: Verify outputs
