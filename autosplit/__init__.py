@@ -5,3 +5,6 @@ A tool for splitting multi-product spreadsheets into individual files.
 """
 
 __version__ = "0.1.0"
+
+print("Initializing AutoSplit...")
+print("Package path:", __file__)

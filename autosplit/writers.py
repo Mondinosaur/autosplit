@@ -28,20 +28,49 @@ def write_group(df: Any, out_dir: str, filename: str, as_xlsx: bool = True) -> s
     Raises:
         RuntimeError: If pandas is not available for xlsx output
     """
-    ensure_dir(out_dir)
-    path = os.path.join(out_dir, filename)
-    
-    if as_xlsx:
-        if pd is None:
-            raise RuntimeError("pandas not available for writing xlsx")
-        # pandas will pick an engine available (openpyxl/xlsxwriter)
-        df.to_excel(path + (".xlsx" if not path.endswith('.xlsx') else ''), index=False)
-        return path + (".xlsx" if not path.endswith('.xlsx') else '')
-    else:
-        df.to_csv(path + (".csv" if not path.endswith('.csv') else ''), 
-                  index=False, 
-                  quoting=csv.QUOTE_MINIMAL)
-        return path + (".csv" if not path.endswith('.csv') else '')
+    try:
+        print(f"\nWriting group to file:")
+        print(f"- Output directory: {out_dir}")
+        print(f"- Filename: {filename}")
+        print(f"- Format: {'xlsx' if as_xlsx else 'csv'}")
+        print(f"- DataFrame shape: {df.shape}")
+        
+        ensure_dir(out_dir)
+        path = os.path.join(out_dir, filename)
+        
+        if as_xlsx:
+            if pd is None:
+                raise RuntimeError("pandas not available for writing xlsx")
+            
+            full_path = path + (".xlsx" if not path.endswith('.xlsx') else '')
+            print(f"Writing Excel file: {full_path}")
+            
+            # pandas will pick an engine available (openpyxl/xlsxwriter)
+            df.to_excel(full_path, index=False, engine='openpyxl')
+            
+            if os.path.exists(full_path):
+                print(f"Successfully wrote file: {full_path}")
+                print(f"File size: {os.path.getsize(full_path)} bytes")
+            else:
+                raise RuntimeError(f"File was not created: {full_path}")
+                
+            return full_path
+        else:
+            full_path = path + (".csv" if not path.endswith('.csv') else '')
+            print(f"Writing CSV file: {full_path}")
+            
+            df.to_csv(full_path, index=False, quoting=csv.QUOTE_MINIMAL)
+            
+            if os.path.exists(full_path):
+                print(f"Successfully wrote file: {full_path}")
+                print(f"File size: {os.path.getsize(full_path)} bytes")
+            else:
+                raise RuntimeError(f"File was not created: {full_path}")
+                
+            return full_path
+    except Exception as e:
+        print(f"Error writing group to file: {e}")
+        raise
 
 def build_manifest_row(product_key: str, 
                       file_path: str, 

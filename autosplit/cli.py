@@ -11,7 +11,14 @@ try:
 except ImportError:
     pd = None
 
-from . import readers, processors, writers, validators
+import autosplit.readers as readers
+import autosplit.processors as processors
+import autosplit.writers as writers
+import autosplit.validators as validators
+
+def __main__():
+    """Entry point when module is run directly."""
+    sys.exit(main())
 
 def main(argv: Optional[List[str]] = None) -> int:
     """Main entry point for the AutoSplit CLI.
@@ -22,6 +29,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     Returns:
         int: Exit code (0 for success, non-zero for errors)
     """
+    print("Starting AutoSplit...")
     # Debug info
     print("\nStarting AutoSplit CLI...")
     print(f"Python version: {sys.version}")
@@ -56,8 +64,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument('--xlsx', action='store_true', help='Write output XLSX (default)')
     parser.add_argument('--output-dir', default='outputs', 
                        help='Directory to write outputs')
+    parser.add_argument('--header-row', type=int, default=0,
+                       help='Row number (0-based) containing headers')
+    parser.add_argument('--debug', action='store_true',
+                       help='Enable debug output')
 
+    print("Parsing arguments...")
     args = parser.parse_args(argv)
+    print(f"Arguments: {args}")
     
     # Convert output_dir to absolute path if it's not already
     out_dir = os.path.abspath(args.output_dir)
@@ -71,9 +85,17 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Read input file
     try:
-        df = readers.read_input(args.input, sheet=args.sheet)
+        df = readers.read_input(args.input, sheet=args.sheet, header_row=args.header_row)
+        if args.debug:
+            print("\nDataFrame info:")
+            print(df.info())
+            print("\nFirst few rows:")
+            print(df.head())
     except Exception as e:
         print(f"ERROR: failed to read input '{args.input}': {e}")
+        if args.debug:
+            import traceback
+            traceback.print_exc()
         return 2
 
     if df is None or df.empty:
@@ -110,11 +132,37 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"Successfully opened {manifest_path} for writing")
             writer = csv.writer(mf)
             writer.writerow(['product_key', 'file', 'status', 'warnings'])
+
+            for product_key, group_df in groups.items():
+                warnings = validators.validate_group(
+                    group_df, 
+                    args.min_images, 
+                    image_cols
+                )
+                status = 'ok' if not warnings else 'warning'
+                safe_key = (str(product_key).strip() or 'unnamed').replace(' ', '_')
+                
+                try:
+                    written = writers.write_group(
+                        group_df, 
+                        out_dir, 
+                        safe_key, 
+                        as_xlsx=args.xlsx
+                    )
+                    print(f"Successfully wrote group for {safe_key} to {written}")
+                except Exception as e:
+                    written = ''
+                    status = 'error'
+                    warnings.append(str(e))
+                    print(f"Error writing group for {safe_key}: {e}")
+                    
+                writer.writerow(
+                    writers.build_manifest_row(product_key, written, status, warnings)
+                )
+                
     except IOError as e:
         print(f"Error writing manifest: {e}")
         return 1
-        writer = csv.writer(mf)
-        writer.writerow(['product_key', 'file', 'status', 'warnings'])
 
         for product_key, group_df in groups.items():
             warnings = validators.validate_group(
@@ -143,3 +191,6 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     print(f"Done. Wrote {len(groups)} product files. Manifest: {manifest_path}")
     return 0
+
+if __name__ == "__main__":
+    __main__()
