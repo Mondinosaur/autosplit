@@ -4,11 +4,13 @@ import argparse
 import csv
 import os
 import sys
+import traceback
 from typing import List, Optional
 
 try:
     import pandas as pd
-except ImportError:
+except ImportError as e:
+    print(f"Error importing pandas: {e}")
     pd = None
 
 from . import readers, processors, writers, validators
@@ -22,12 +24,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     Returns:
         int: Exit code (0 for success, non-zero for errors)
     """
-    print("\nStarting AutoSplit CLI...")
-    print(f"Current working directory: {os.getcwd()}")
-    parser = argparse.ArgumentParser(
-        prog='autosplit', 
-        description='Split multi-product sheets into per-product files'
-    )
+    try:
+        print("\nStarting AutoSplit CLI...")
+        print(f"Current working directory: {os.getcwd()}")
+    except Exception as e:
+        print(f"Error during startup: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+        parser = argparse.ArgumentParser(
+            prog='autosplit', 
+            description='Split multi-product sheets into per-product files'
+        )
     parser.add_argument('input', help='Input .xlsx or .csv file (or a folder)')
     parser.add_argument('--key-col', help='Column name to group by (e.g. SKU)')
     parser.add_argument('--block', action='store_true', 
